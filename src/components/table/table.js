@@ -1,10 +1,26 @@
 import React, { Component } from 'react'
 import { Table, Modal } from 'react-bootstrap'
 import { connect } from 'react-redux';
-import { fetchingCampaigns } from './action'
+import { fetchingCampaigns, updateCampaignDate } from './action'
 import Datepicker from './datepicker'
 import moment from 'moment';
+import counterpart from 'counterpart'
+import Translate from 'react-translate-component'
 
+counterpart.registerTranslations('en', {
+  date :'Date',
+  campaign:'Campaign',
+  view:'View',
+  actions:'Actions',
+  chooselanguage:'Choose Language'
+})
+counterpart.registerTranslations('fr', {
+  date :'Rendez-vous amoureux',
+  campaign:'Campagne',
+  view:'Vue',
+  actions:'Actes',
+  chooselanguage:'Choisir la langue'
+})
 class Tablebody extends Component {
 
   constructor() {
@@ -51,7 +67,7 @@ class Tablebody extends Component {
     }
   }
 
-  activateModal(type, ele) {
+  activateModal(type, ele,index) {
     this.setState({ modalActive: true, modalType: type, selectedCampaign: [ele] })
 
   }
@@ -70,7 +86,9 @@ class Tablebody extends Component {
   }
 
   updateDate(date) {
-    console.log("Updating Date", moment(date).valueOf());
+    this.state.selectedCampaign[0].dueDate = moment(date).valueOf()
+    this.props.updateCampaignDate({updatedValue:this.state.selectedCampaign[0]});
+    this.handleClose()
   }
 
   checkData(ele, dateMilliseconds, operator) {
@@ -99,16 +117,17 @@ class Tablebody extends Component {
   }
 
   render() {
+    moment.locale(this.props.locale)
     const eventsData = this.calculateEvents()
     return (
       <Table  bordered hover>
         {this.renderModal()}
         <thead className="bg-light">
           <tr>
-            <th>Date</th>
-            <th>Campaign</th>
-            <th>View</th>
-            <th>Actions</th>
+            <th><Translate content="date"></Translate></th>
+            <th><Translate content="campaign"></Translate></th>
+            <th><Translate content="view"></Translate></th>
+            <th><Translate content="actions"></Translate></th>
           </tr>
         </thead>
         <tbody>
@@ -117,11 +136,11 @@ class Tablebody extends Component {
               <tr key={index}>
                 <td>{this.getDueDate(key.dueDate)}</td>
                 <td><img style={{ "height": "32px" }} src={key.icon}></img>{key.campaignName}</td>
-                <td>{key.price}</td>
+                <td>{key.price} {this.props.locale ==='en'? '$' : '€'}</td>
                 <td>
-                  <span onClick={() => this.activateModal("csv", key)}><img style={{ "height": "32px" }} src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT6y3qmTD_DonKHvCRgaOm_Q5u6ZNDOXV_WbMM3SHtTiZdGgIC9"></img></span>
-                  <span onClick={() => this.activateModal("report", key)}><img style={{ "height": "32px", "marginLeft": "10px" }} src="https://cdn0.iconfinder.com/data/icons/ie_ICandies/64/button_34.png"></img></span>
-                  <span className="justify-content-end" onClick={() => this.activateModal("datepicker", key)}><img style={{ "height": "32px", "marginLeft": "10px" }} src="https://cdn4.iconfinder.com/data/icons/brainy-icons-free-36-science-and-education-icons/64/calendar_64.png"></img></span>
+                  <span onClick={() => this.activateModal("csv", key,index)}><img style={{ "height": "32px" }} src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT6y3qmTD_DonKHvCRgaOm_Q5u6ZNDOXV_WbMM3SHtTiZdGgIC9"></img></span>
+                  <span onClick={() => this.activateModal("report", key,index)}><img style={{ "height": "32px", "marginLeft": "10px" }} src="https://cdn0.iconfinder.com/data/icons/ie_ICandies/64/button_34.png"></img></span>
+                  <span className="justify-content-end" onClick={() => this.activateModal("datepicker", key,index)}><img style={{ "height": "32px", "marginLeft": "10px" }} src="https://cdn4.iconfinder.com/data/icons/brainy-icons-free-36-science-and-education-icons/64/calendar_64.png"></img></span>
 
                 </td>
               </tr>
@@ -134,10 +153,11 @@ class Tablebody extends Component {
 }
 const mapStateToProps = (state) => {
   return {
-    campaigns: state.campaignreducer.campaigns[0],
-    activetab: state.campaignreducer.activetab
+    campaigns: state.campaignreducer.campaigns,
+    activetab: state.campaignreducer.activetab,
+    locale:state.campaignreducer.locale
   };
 };
 
-export default connect(mapStateToProps, { fetchingCampaigns })(Tablebody);
+export default connect(mapStateToProps, { fetchingCampaigns, updateCampaignDate })(Tablebody);
 
